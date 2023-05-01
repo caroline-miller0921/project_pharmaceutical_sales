@@ -3,6 +3,10 @@ import os
 import numpy as np
 import pandas as pd
 from datetime import datetime
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import MinMaxScaler
 
 def get_mental_health_data():
 
@@ -138,12 +142,12 @@ def clean_rates_data(rates_df):
 
     rates_df = rates_df.dropna()
 
-    rates_df['percentage_suicide'] = ((rates_df.suicide_rates_per_100k / 100_000) * 100)
-    rates_df['percentage_depressive_disorder'] = ((rates_df.depressive_disorder_rates_per_100k / 100_000) * 100)
+    rates_df['percentage_suicide'] = ((rates_df.suicide_rates_per_100k / 100_000))
+    rates_df['percentage_depressive_disorder'] = ((rates_df.depressive_disorder_rates_per_100k / 100_000))
     rates_df['num_suicide'] = round(rates_df.percentage_suicide * rates_df.population)
     rates_df['num_depressed'] = round(rates_df.percentage_depressive_disorder * rates_df.population)
 
-    rates_df.drop(columns='index', inplace=True)
+    rates_df.drop(columns={'index', 'suicide_rates_per_100k', 'depressive_disorder_rates_per_100k'}, inplace=True)
 
     return rates_df
 
@@ -177,7 +181,7 @@ def yearly_aggregation():
     rates_df = clean_rates_data(rates_df)
 
     yearly_disorders = mental_health_df.groupby('year').mean()
-    yearly_prevalence_sex = population_df.groupby('year').sum()
+    yearly_prevalence_sex = population_df.groupby('year').mean()
     yearly_depressive_rates = depressive_rates_df.groupby('year').mean()
     yearly_suicide_rates = rates_df.groupby('year').mean()
 
@@ -195,3 +199,75 @@ def merge_yearly_aggregation():
 
     return df
 
+def split_yearly_data():
+
+    df = merge_yearly_aggregation()
+
+    train_size = .7
+    train_index = round(train_size * df.shape[0])
+
+    train_yearly = df[:train_index]
+    test_yearly = df[train_index:]
+
+    return train_yearly, test_yearly
+
+def split_data(df):
+
+    train_size = int(len(df) * 0.5)
+    validate_size = int(len(df) * 0.3)
+    test_size = int(len(df) - train_size - validate_size)
+    validate_end_index = train_size + validate_size
+    train = df[:train_size]
+    validate = df[train_size:validate_end_index]
+    test = df[validate_end_index:]
+
+    return train, validate, test
+
+def viz_num_depressed(train_yearly, test_yearly):
+
+    plt.plot(train_yearly.index, train_yearly.num_depressed, color='indigo')
+    plt.plot(test_yearly.index, test_yearly.num_depressed, color='violet')
+    plt.title('Increase in People with Depressive Disorder')
+    plt.xlabel('Year')
+    plt.ylabel('Number of People (mil)')
+    plt.show()
+
+def scale_data(train, 
+               validate, 
+               test, 
+               columns_to_scale,
+               return_scaler=False):
+    '''
+    Scales the 3 data splits. 
+    Takes in train, validate, and test data splits and returns their scaled counterparts.
+    If return_scalar is True, the scaler object will be returned as well
+    '''
+
+    # make copies of our original data so we dont gronk up anything
+    train_scaled = train.copy()
+    validate_scaled = validate.copy()
+    test_scaled = test.copy()
+    
+    #     make the thing
+    scaler = MinMaxScaler()
+    
+    #     fit the thing
+    scaler.fit(train[columns_to_scale])
+    
+    # applying the scaler:
+    train_scaled[columns_to_scale] = pd.DataFrame(
+        scaler.transform(train[columns_to_scale]),
+        columns=train[columns_to_scale].columns.values, 
+        index = train.index)
+                                                  
+    validate_scaled[columns_to_scale] = pd.DataFrame(
+        scaler.transform(validate[columns_to_scale]),
+        columns=validate[columns_to_scale].columns.values).set_index(
+        [validate.index.values])
+    
+    test_scaled[columns_to_scale] = pd.DataFrame(
+        scaler.transform(test[columns_to_scale]),
+        columns = test[columns_to_scale].columns.values).set_index(
+        [test.index.values])
+    
+    return train_scaled, validate_scaled, test_scaled
