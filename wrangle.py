@@ -61,8 +61,8 @@ def clean_mental_health_data(mental_health_df):
 
     df = mental_health_df
 
-    for col in df.columns:
-        print(f'There are {df[col].isna().sum()}, {round(((df[col].isna().sum()) / len(df) * 100), 2)}%, null values in {col}')
+    # for col in df.columns:
+    #     print(f'There are {df[col].isna().sum()}, {round(((df[col].isna().sum()) / len(df) * 100), 2)}%, null values in {col}')
 
     df['schizophrenia'] = df.schizophrenia.astype(float)
     df['bipolar_disorder'] = df.bipolar_disorder.astype(float)
@@ -82,8 +82,8 @@ def clean_population_data(population_df):
 
     df = population_df
 
-    for col in df.columns:
-        print(f'There are {df[col].isna().sum()}, {round(((df[col].isna().sum()) / len(df) * 100), 2)}%, null values in {col}')
+    # for col in df.columns:
+    #     print(f'There are {df[col].isna().sum()}, {round(((df[col].isna().sum()) / len(df) * 100), 2)}%, null values in {col}')
 
     df = df.drop(columns={'anxiety_disorders',
                           'drug_use_disorders',
@@ -137,8 +137,8 @@ def clean_rates_data(rates_df):
     rates_df['depressive_disorder_rates_per_100k'] = rates_df.depressive_disorder_rates_per_100k.astype(float)
     rates_df['population'] = rates_df.population.astype(float)
 
-    for col in rates_df.columns:
-        print(f'There are {rates_df[col].isna().sum()}, {round(((rates_df[col].isna().sum()) / len(rates_df) * 100), 2)}%, null values in {col}')
+    # for col in rates_df.columns:
+    #     print(f'There are {rates_df[col].isna().sum()}, {round(((rates_df[col].isna().sum()) / len(rates_df) * 100), 2)}%, null values in {col}')
 
     rates_df = rates_df.dropna()
 
